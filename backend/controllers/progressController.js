@@ -21,7 +21,7 @@ exports.getUserProgress = async (req, res) => {
       });
     }
 
-    // 2. Total quizzes attempted (unique quizzes) & Total attempts count (excluding English)
+    // 2. Total quizzes attempted (unique quizzes) & Total attempts count (excluding English) (excluding English)
     const [attemptStats] = await db.query(
       `SELECT COUNT(a.attempt_id) as total_attempts, COUNT(DISTINCT a.quiz_id) as unique_quizzes 
        FROM Attempts a 
@@ -118,7 +118,7 @@ exports.getUserProgress = async (req, res) => {
       JOIN Quizzes q ON a.quiz_id = q.quiz_id 
       JOIN Topics t ON q.topic_id = t.topic_id 
       JOIN Language l ON t.language_id = l.language_id 
-      WHERE a.user_id = ? AND LOWER(l.language_name) != 'english'
+      WHERE a.user_id = ? AND LOWER(l.language_name) != 'english'AND LOWER(l.language_name) != 'english'
       ORDER BY a.attempt_date DESC 
       LIMIT 5`,
       [user_id]
