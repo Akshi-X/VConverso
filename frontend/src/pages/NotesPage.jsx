@@ -54,50 +54,212 @@ const NotesPage = () => {
     );
   }
 
+  // A helper function to parse inline markdown (bold ** and italic *)
+  const parseInlineStyles = (text) => {
+    if (!text) return '';
+    const regex = /(\*\*.*?\*\*|\*.*?\*)/g;
+    const parts = text.split(regex);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={index} style={{ color: 'var(--color-brown-dark)', fontWeight: '700' }}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <em key={index} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
+      }
+      return part;
+    });
+  };
+
   // A helper function to parse basic markdown-like structures to HTML (e.g. lists, bold text, headers)
   // This gives the notes a beautiful rendering engine!
   const renderFormattedContent = (text) => {
     if (!text) return '';
-    return text
-      .split('\n')
-      .map((line, idx) => {
-        // Bullet points
-        if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-          return <li key={idx} className="mb-2 ms-3" style={{ color: 'var(--text-sec)' }}>{line.replace(/^[-*]\s+/, '')}</li>;
+    const lines = text.split('\n');
+    const processedElements = [];
+    let currentList = null;
+    let currentTable = null;
+    
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx];
+      const trimmed = line.trim();
+      
+      // Handle tables (starting with |)
+      if (trimmed.startsWith('|')) {
+        if (line.includes('---')) {
+          continue; // skip separator
         }
-        // Bold tags: **text**
-        if (line.includes('**')) {
-          // simple bold replacement
-          const parts = line.split('**');
-          return (
-            <p key={idx} className="mb-3 leading-relaxed" style={{ color: 'var(--text-sec)' }}>
-              {parts.map((part, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} style={{ color: 'var(--color-brown-dark)', fontWeight: '700' }}>{part}</strong> : part)}
-            </p>
-          );
+        const columns = line.split('|').map(c => c.trim()).filter(c => c !== '');
+        
+        if (!currentTable) {
+          currentTable = [];
         }
-        // Headings: ###
-        if (line.trim().startsWith('###')) {
-          return <h4 key={idx} className="fw-bold mt-4 mb-3" style={{ color: 'var(--color-brown-dark)' }}>{line.replace(/^###\s+/, '')}</h4>;
+        currentTable.push(columns);
+        continue;
+      } else if (currentTable) {
+        const tableRows = currentTable;
+        currentTable = null;
+        processedElements.push(
+          <div key={`table-${idx}`} className="mb-4 overflow-hidden rounded-3 border" style={{ borderColor: 'rgba(107, 62, 46, 0.18)' }}>
+            {tableRows.map((row, rIdx) => (
+              <div key={rIdx} className={`row py-2.5 g-0 align-items-center ${rIdx === tableRows.length - 1 ? '' : 'border-bottom'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', background: rIdx === 0 ? 'rgba(107, 62, 46, 0.04)' : 'var(--bg-sec)' }}>
+                {row.map((col, cIdx) => (
+                  <div key={cIdx} className={`col px-3 small ${rIdx === 0 ? 'fw-bold' : 'font-semibold'} ${cIdx === row.length - 1 ? '' : 'border-end'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', color: 'var(--text-sec)' }}>
+                    {parseInlineStyles(col)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+      }
+      
+      // Handle list items (starting with - or *)
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        const cleanLine = trimmed.replace(/^[-*]\s+/, '');
+        if (!currentList) {
+          currentList = [];
         }
-        if (line.trim().startsWith('##')) {
-          return <h3 key={idx} className="fw-bold mt-4 mb-3 fs-4" style={{ color: 'var(--color-brown-dark)' }}>{line.replace(/^##\s+/, '')}</h3>;
-        }
-        // Table or other blocks
-        if (line.trim().startsWith('|')) {
-          // return table row
-          const columns = line.split('|').map(c => c.trim()).filter(c => c !== '');
-          if (line.includes('---')) return null; // skip separator
-          return (
-            <div key={idx} className="row border-bottom py-2 g-0" style={{ borderColor: 'rgba(107, 62, 46, 0.08)', background: 'var(--bg-sec)' }}>
-              {columns.map((col, colIdx) => (
-                <div key={colIdx} className="col px-3 small font-semibold" style={{ color: 'var(--text-sec)' }}>{col}</div>
-              ))}
+        currentList.push(cleanLine);
+        continue;
+      } else if (currentList) {
+        const listItems = currentList;
+        currentList = null;
+        
+        // Check if this list contains example patterns (like pipe characters or ' = ' or ' — ' or ' – ')
+        const isExampleList = listItems.every(item => item.includes('|') || item.includes(' = ') || item.includes(' — ') || item.includes(' – '));
+        
+        if (isExampleList) {
+          processedElements.push(
+            <div key={`example-table-${idx}`} className="mb-4 overflow-hidden rounded-3 border" style={{ borderColor: 'rgba(107, 62, 46, 0.18)' }}>
+              {listItems.map((item, itemIdx) => {
+                let columns = [];
+                if (item.includes('|')) {
+                  columns = item.split('|').map(c => c.trim());
+                } else if (item.includes(' = ')) {
+                  columns = item.split(' = ').map(c => c.trim());
+                } else if (item.includes(' — ')) {
+                  columns = item.split(' — ').map(c => c.trim());
+                } else if (item.includes(' – ')) {
+                  columns = item.split(' – ').map(c => c.trim());
+                }
+                
+                return (
+                  <div key={itemIdx} className={`row py-2.5 g-0 align-items-center ${itemIdx === listItems.length - 1 ? '' : 'border-bottom'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', background: itemIdx % 2 === 0 ? 'var(--bg-sec)' : 'transparent' }}>
+                    {columns.map((col, colIdx) => (
+                      <div key={colIdx} className={`col px-3 small font-semibold leading-relaxed ${colIdx === columns.length - 1 ? '' : 'border-end'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', color: 'var(--text-sec)' }}>
+                        {parseInlineStyles(col)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           );
+        } else {
+          processedElements.push(
+            <ul key={`list-${idx}`} className="list-unstyled mb-4">
+              {listItems.map((item, itemIdx) => (
+                <li key={itemIdx} className="mb-2 ms-3 d-flex align-items-start gap-2" style={{ color: 'var(--text-sec)' }}>
+                  <i className="bi bi-circle-fill mt-2" style={{ fontSize: '6px', color: 'var(--color-brown-med)', flexShrink: 0 }}></i>
+                  <div>{parseInlineStyles(item)}</div>
+                </li>
+              ))}
+            </ul>
+          );
         }
+      }
+      
+      // Handle headings
+      if (trimmed.startsWith('#')) {
+        const depth = (line.match(/^#+/) || ['#'])[0].length;
+        const cleanText = trimmed.replace(/^#+\s*/, '');
         
-        return line.trim() === '' ? <br key={idx} /> : <p key={idx} className="mb-3 leading-relaxed" style={{ color: 'var(--text-sec)' }}>{line}</p>;
-      });
+        if (depth === 2) {
+          processedElements.push(<h3 key={idx} className="fw-bold mt-4 mb-3 fs-4" style={{ color: 'var(--color-brown-dark)' }}>{parseInlineStyles(cleanText)}</h3>);
+        } else if (depth === 3) {
+          processedElements.push(<h4 key={idx} className="fw-bold mt-4 mb-3 fs-5" style={{ color: 'var(--color-brown-dark)' }}>{parseInlineStyles(cleanText)}</h4>);
+        } else {
+          processedElements.push(<h5 key={idx} className="fw-bold mt-3 mb-2 fs-6" style={{ color: 'var(--color-brown-dark)' }}>{parseInlineStyles(cleanText)}</h5>);
+        }
+        continue;
+      }
+      
+      // Empty line
+      if (trimmed === '') {
+        processedElements.push(<br key={idx} />);
+      } else {
+        processedElements.push(
+          <p key={idx} className="mb-3 leading-relaxed" style={{ color: 'var(--text-sec)' }}>
+            {parseInlineStyles(line)}
+          </p>
+        );
+      }
+    }
+    
+    // Cleanup remaining structures
+    if (currentTable) {
+      const tableRows = currentTable;
+      processedElements.push(
+        <div key="table-end" className="mb-4 overflow-hidden rounded-3 border" style={{ borderColor: 'rgba(107, 62, 46, 0.18)' }}>
+          {tableRows.map((row, rIdx) => (
+            <div key={rIdx} className={`row py-2.5 g-0 align-items-center ${rIdx === tableRows.length - 1 ? '' : 'border-bottom'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', background: rIdx === 0 ? 'rgba(107, 62, 46, 0.04)' : 'var(--bg-sec)' }}>
+              {row.map((col, cIdx) => (
+                <div key={cIdx} className={`col px-3 small ${rIdx === 0 ? 'fw-bold' : 'font-semibold'} ${cIdx === row.length - 1 ? '' : 'border-end'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', color: 'var(--text-sec)' }}>
+                  {parseInlineStyles(col)}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    if (currentList) {
+      const listItems = currentList;
+      const isExampleList = listItems.every(item => item.includes('|') || item.includes(' = ') || item.includes(' — ') || item.includes(' – '));
+      
+      if (isExampleList) {
+        processedElements.push(
+          <div key="example-table-end" className="mb-4 overflow-hidden rounded-3 border" style={{ borderColor: 'rgba(107, 62, 46, 0.18)' }}>
+            {listItems.map((item, itemIdx) => {
+              let columns = [];
+              if (item.includes('|')) {
+                columns = item.split('|').map(c => c.trim());
+              } else if (item.includes(' = ')) {
+                columns = item.split(' = ').map(c => c.trim());
+              } else if (item.includes(' — ')) {
+                columns = item.split(' — ').map(c => c.trim());
+              } else if (item.includes(' – ')) {
+                columns = item.split(' – ').map(c => c.trim());
+              }
+              
+              return (
+                <div key={itemIdx} className={`row py-2.5 g-0 align-items-center ${itemIdx === listItems.length - 1 ? '' : 'border-bottom'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', background: itemIdx % 2 === 0 ? 'var(--bg-sec)' : 'transparent' }}>
+                  {columns.map((col, colIdx) => (
+                    <div key={colIdx} className={`col px-3 small font-semibold leading-relaxed ${colIdx === columns.length - 1 ? '' : 'border-end'}`} style={{ borderColor: 'rgba(107, 62, 46, 0.18)', color: 'var(--text-sec)' }}>
+                      {parseInlineStyles(col)}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      } else {
+        processedElements.push(
+          <ul key="list-end" className="list-unstyled mb-4">
+            {listItems.map((item, itemIdx) => (
+              <li key={itemIdx} className="mb-2 ms-3 d-flex align-items-start gap-2" style={{ color: 'var(--text-sec)' }}>
+                <i className="bi bi-circle-fill mt-2" style={{ fontSize: '6px', color: 'var(--color-brown-med)', flexShrink: 0 }}></i>
+                <div>{parseInlineStyles(item)}</div>
+              </li>
+            ))}
+          </ul>
+        );
+      }
+    }
+    
+    return processedElements;
   };
 
   return (

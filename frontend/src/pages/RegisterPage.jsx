@@ -161,16 +161,16 @@ const RegisterPage = () => {
                   id="passwordInput"
                 />
                 
-                {/* White square eye button */}
+                {/* Elegant transparent eye button */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="tw-absolute tw-right-[1px] tw-h-[calc(100%-2px)] tw-w-12 tw-bg-v-bg-sec hover:tw-bg-v-navbar tw-rounded-r-[11px] tw-flex tw-items-center tw-justify-center tw-transition-all"
+                  className="tw-absolute tw-right-4 tw-text-v-text-muted hover:tw-text-v-brown-dark focus:tw-outline-none tw-transition-all"
                 >
                   {showPassword ? (
-                    <EyeOff className="tw-w-4 tw-h-4 tw-text-v-brown-dark" />
+                    <EyeOff className="tw-w-4 tw-h-4" />
                   ) : (
-                    <Eye className="tw-w-4 tw-h-4 tw-text-v-brown-dark" />
+                    <Eye className="tw-w-4 tw-h-4" />
                   )}
                 </button>
               </div>

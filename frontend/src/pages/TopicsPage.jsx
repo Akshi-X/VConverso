@@ -9,37 +9,37 @@ const SPANISH_METADATA = {
     category: "Basics",
     duration: "~15 Mins",
     icon: "bi-info-circle",
-    subtopics: ["Los alfabetos", "Los vocales", "The rules of pronunciation", "Consonants C & G", "La guía de pronunciación", "El Abecedario"]
+    subtopics: ["Los alfabetos", "Los vocales", "Rules of pronunciation", "Special pronunciations of C and G", "Pronunciation guide", "El Abecedario"]
   },
   "numbers": {
     category: "Basics",
     duration: "~20 Mins",
     icon: "bi-hash",
-    subtopics: ["Los números cardinales (1–100)", "Los números cardinales (1–1000)", "Los números ordinales"]
+    subtopics: ["Cardinal Numbers (1–100)", "Cardinal Numbers (1–1000)", "Ordinal Numbers"]
   },
   "los artículos": {
     category: "Grammar",
     duration: "~20 Mins",
     icon: "bi-body-text",
-    subtopics: ["Definite Articles (el, la, los, las)", "Indefinite Articles (un, una, unos, unas)", "Gender Agreement Rules"]
+    subtopics: ["Definite Articles (The)", "Indefinite Articles (A, An, Some)", "Gender Rules", "Exceptions", "Special Rule"]
   },
   "las cosas de la clase": {
     category: "Vocabulary",
     duration: "~15 Mins",
     icon: "bi-backpack",
-    subtopics: ["Classroom Objects", "School & Education Vocab", "Common Phrases"]
+    subtopics: ["Masculine Words", "Feminine Words", "Useful Classroom Sentences", "Practice Vocabulary"]
   },
   "los datos personales": {
     category: "Conversation",
     duration: "~20 Mins",
     icon: "bi-person-badge",
-    subtopics: ["Introducing Yourself", "Stating Age & Birthdays", "Sharing Contacts & Address"]
+    subtopics: ["Basic Vocabulary", "Introducing Yourself", "Sample Introduction", "Mini Dialogue"]
   },
   "el origen y la nacionalidad": {
     category: "Conversation",
     duration: "~20 Mins",
     icon: "bi-globe",
-    subtopics: ["Asking Origin with SER", "Countries & Adjectives", "Nationalities Agreement"]
+    subtopics: ["Introduction to Gentilicios", "Hispanoamérica Nationalities", "World Nationalities", "Special Nationality Forms"]
   },
   "saludar y despedirse": {
     category: "Conversation",
@@ -81,49 +81,85 @@ const SPANISH_METADATA = {
     category: "Vocabulary",
     duration: "~20 Mins",
     icon: "bi-house",
-    subtopics: ["Rooms & Spaces", "Major Home Furniture", "Household Objects"]
+    subtopics: ["House & Structure", "Rooms & Living Spaces", "Furniture & Facilities", "Outdoor Area"]
   },
   "las emociones": {
     category: "Vocabulary",
     duration: "~20 Mins",
     icon: "bi-emoji-smile",
-    subtopics: ["Temporary Feelings", "Conjugating ESTAR", "Emotional State Matching"]
+    subtopics: ["Blissful Emotions", "Sad Emotions", "Angry & Fearful Emotions", "Miscellaneous Emotions"]
   },
   "las direcciones": {
     category: "Conversation",
     duration: "~20 Mins",
     icon: "bi-compass",
-    subtopics: ["Asking for Locations", "Navigating Streets", "Travel Commands"]
+    subtopics: ["Conversational Phrases", "Verbs & Commands", "Streets & Structures", "Key Questions"]
   },
   "expresar la hora": {
     category: "Conversation",
     duration: "~20 Mins",
     icon: "bi-clock",
-    subtopics: ["Asking '¿Qué hora es?'", "Rules of Es la / Son las", "Adding & Subtracting Minutes"]
+    subtopics: ["Asking & Telling Time", "Hourly Examples Table", "Meeting 'At' a Time", "Vocabulary Nuances"]
   },
   "los meses del año": {
     category: "Vocabulary",
     duration: "~15 Mins",
     icon: "bi-calendar2-range",
-    subtopics: ["Twelve Months", "Formatting Spanish Dates", "Seasons & Calendars"]
+    subtopics: ["Twelve Months", "Time Intervals", "Relative Time & Dates", "Days & Time-of-Day Vocab"]
   },
   "vocabularios de la familia": {
     category: "Vocabulary",
     duration: "~20 Mins",
     icon: "bi-people",
-    subtopics: ["Immediate Family Members", "Extended Family Tree", "Expressing Kinship"]
+    subtopics: ["Kinship & Immediate Family", "Extended Family & In-Laws", "Relationships & Status", "Ser vs. Estar with Family"]
   },
   "el clima y la estación": {
     category: "Vocabulary",
     duration: "~20 Mins",
     icon: "bi-cloud-sun",
-    subtopics: ["Weather with HACER", "Atmospheric Cues", "The Four Seasons"]
+    subtopics: ["The Four Seasons", "Weather with Ser & Estar", "Phrases with Hace & Forecasts", "Dates with Ser & Estar"]
   },
   "los vocabularios de la geografía": {
     category: "Vocabulary",
     duration: "~20 Mins",
     icon: "bi-map",
-    subtopics: ["Geography landscapes", "Natural features", "Rivers, lakes & mountains"]
+    subtopics: ["Landscapes & Landforms", "Water Features", "Flora & Vegetation", "Climate & Celestial Bodies", "Directions & Coordinates"]
+  },
+  "essay structure & transitions": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-pencil-square",
+    subtopics: ["Essay Structure", "Transition Words", "Argumentative Phrases", "Sample Outline"]
+  },
+  "mi familia": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-people",
+    subtopics: ["Immediate Family", "Extended Family", "Ages & Descriptions", "Occupations", "Sample Essay"]
+  },
+  "mi equipo favorito": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-trophy",
+    subtopics: ["Sports Teams", "Cricket & Stadiums", "Adjectives for Teams", "Colors & Identity", "Sample Essay"]
+  },
+  "mi casa": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-house",
+    subtopics: ["Home & Location", "Household Rooms", "Describing Spaces", "Family & Home", "Sample Essay"]
+  },
+  "mi universidad": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-mortarboard",
+    subtopics: ["Academic Institutions", "Campus & Facilities", "Study Habits", "Friends & Learning", "Sample Essay"]
+  },
+  "mi ciudad": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-buildings",
+    subtopics: ["Urban & City Life", "Local Culture", "Festival & Tradition", "Vibrant Atmosphere", "Sample Essay"]
   }
 };
 
@@ -167,6 +203,12 @@ const GENERAL_METADATA = {
     duration: "~20 Mins",
     icon: "bi-chat-dots",
     subtopics: ["Transit & Directions Cues", "Ordering Food & Drinks", "Locals Meet-and-Greet"]
+  },
+  "essay writing": {
+    category: "Essay Writing",
+    duration: "~20 Mins",
+    icon: "bi-pencil-square",
+    subtopics: ["Thesis Statements", "Cohesive Devices", "Academic Tone", "Structure Rules"]
   }
 };
 
@@ -246,6 +288,7 @@ const TopicsPage = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [activeMainTab, setActiveMainTab] = useState('modules');
   
   const navigate = useNavigate();
 
@@ -297,11 +340,16 @@ const TopicsPage = () => {
     const meta = getMetadata(topic.topic_name);
     const matchesSearch = topic.topic_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           topic.topic_description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || meta.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    
+    if (activeMainTab === 'essays') {
+      return matchesSearch && meta.category === 'Essay Writing';
+    } else {
+      const matchesCategory = selectedCategory === 'All' || meta.category === selectedCategory;
+      return matchesSearch && matchesCategory && meta.category !== 'Essay Writing';
+    }
   });
 
-  // Unique categories for the current syllabus
+  // Unique categories for the current syllabus (excluding Essay Writing which is its own main tab)
   const categoriesList = ['All', 'Basics', 'Grammar', 'Vocabulary', 'Conversation'];
 
   return (
@@ -340,12 +388,12 @@ const TopicsPage = () => {
         <div className="row g-4 align-items-center">
           
           {/* Search bar */}
-          <div className="col-lg-5 col-md-6">
+          <div className={activeMainTab === 'essays' ? 'col-12' : 'col-lg-5 col-md-6'}>
             <div className="search-container">
               <i className="bi bi-search search-icon"></i>
               <input
                 type="text"
-                placeholder="Search modules by title or description..."
+                placeholder={activeMainTab === 'essays' ? "Search essays by title or description..." : "Search modules by title or description..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="form-control custom-input search-input w-100"
@@ -354,37 +402,76 @@ const TopicsPage = () => {
           </div>
 
           {/* Category Filter Badges */}
-          <div className="col-lg-7 col-md-6">
-            <div className="d-flex flex-wrap gap-2 justify-content-md-end">
-              {categoriesList.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
-                >
-                  {cat}
-                </button>
-              ))}
+          {activeMainTab !== 'essays' && (
+            <div className="col-lg-7 col-md-6">
+              <div className="d-flex flex-wrap gap-2 justify-content-md-end">
+                {categoriesList.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
 
-      {/* Topics Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold mb-0 fs-3" style={{ color: 'var(--color-brown-dark)' }}>Learning Modules</h2>
-        <span className="small font-semibold text-secondary" style={{ background: 'var(--bg-sec)', padding: '6px 14px', borderRadius: '50px', border: '1px solid var(--card-border)' }}>
-          Showing {filteredTopics.length} of {topics.length} Modules
+      {/* Topics Header with premium custom tabs */}
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 border-bottom pb-3" style={{ borderColor: 'rgba(107, 62, 46, 0.12)' }}>
+        <div className="d-flex align-items-center gap-3">
+          <button
+            onClick={() => {
+              setActiveMainTab('modules');
+              setSelectedCategory('All');
+            }}
+            className="btn p-0 fs-3 fw-bold border-0 rounded-0 position-relative transition-all"
+            style={{
+              color: activeMainTab === 'modules' ? 'var(--color-brown-dark)' : 'var(--text-muted)',
+              transition: 'color 0.25s ease'
+            }}
+          >
+            Learning Modules
+            {activeMainTab === 'modules' && (
+              <span className="position-absolute bottom-0 start-0 w-100" style={{ height: '3px', background: 'var(--color-brown-dark)', transform: 'translateY(16px)', borderRadius: '3px' }}></span>
+            )}
+          </button>
+          
+          <span style={{ color: 'rgba(107, 62, 46, 0.25)', fontSize: '1.5rem', fontWeight: '300' }}>/</span>
+          
+          <button
+            onClick={() => {
+              setActiveMainTab('essays');
+              setSelectedCategory('Essay Writing');
+            }}
+            className="btn p-0 fs-3 fw-bold border-0 rounded-0 position-relative transition-all"
+            style={{
+              color: activeMainTab === 'essays' ? 'var(--color-brown-dark)' : 'var(--text-muted)',
+              transition: 'color 0.25s ease'
+            }}
+          >
+            Essay Writing
+            {activeMainTab === 'essays' && (
+              <span className="position-absolute bottom-0 start-0 w-100" style={{ height: '3px', background: 'var(--color-brown-dark)', transform: 'translateY(16px)', borderRadius: '3px' }}></span>
+            )}
+          </button>
+        </div>
+        
+        <span className="small font-semibold text-secondary" style={{ background: 'var(--bg-sec)', padding: '6px 14px', borderRadius: '50px', border: '1px solid var(--card-border)', width: 'fit-content' }}>
+          Showing {filteredTopics.length} of {topics.filter(t => activeMainTab === 'essays' ? getMetadata(t.topic_name).category === 'Essay Writing' : getMetadata(t.topic_name).category !== 'Essay Writing').length} {activeMainTab === 'essays' ? 'Guides' : 'Modules'}
         </span>
       </div>
       
       {filteredTopics.length === 0 ? (
         <div className="glass-panel p-5 text-center">
           <i className="bi bi-search fs-1 mb-3 d-block" style={{ color: 'var(--text-muted)' }}></i>
-          <h4 className="fw-bold" style={{ color: 'var(--color-brown-dark)' }}>No Modules Found</h4>
+          <h4 className="fw-bold" style={{ color: 'var(--color-brown-dark)' }}>{activeMainTab === 'essays' ? 'No Essays Found' : 'No Modules Found'}</h4>
           <p className="mb-0" style={{ color: 'var(--text-sec)' }}>
-            We couldn't find any modules matching your filter inputs. Try typing something else!
+            {activeMainTab === 'essays' ? "We couldn't find any essays matching your filter inputs. Try typing something else!" : "We couldn't find any modules matching your filter inputs. Try typing something else!"}
           </p>
         </div>
       ) : (

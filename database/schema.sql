@@ -191,3 +191,38 @@ INSERT INTO Qs (question_id, quiz_id, question_text, option_a, option_b, option_
 (18, 6, 'What does "Die Rechnung, bitte" mean?', 'Where is the station?', 'The bill, please', 'I would like a drink', 'Good morning', 'B');
 
 
+-- --------------------------------------------------------
+-- ESSAY WRITING EXTRA MODULE DATA (English, French, German)
+-- --------------------------------------------------------
+
+-- Essay Writing Topics
+INSERT INTO Topics (topic_id, language_id, topic_name, topic_description) VALUES
+(7, 1, 'Essay Writing', 'Master essay structure, cohesive transitions, academic vocabulary, and argument development in English.'),
+(8, 2, 'Essay Writing', 'Learn the formatting, connector words, and phrasing required to write elegant essays in French.'),
+(9, 3, 'Essay Writing', 'Master essay structure, argumentative word order, and formal transitions in German.');
+
+-- Essay Writing Notes
+INSERT INTO Notes (note_id, topic_id, title, content) VALUES
+(7, 7, 'Academic Essay Writing', 'Academic essays in English follow a clear structure to present a structured argument:\n\n### 1. Structure of an Essay\n- **Introduction**: Introduces the topic and presents a strong **Thesis Statement** (the central argument).\n- **Body Paragraphs**: Develop arguments with supporting evidence and analysis.\n- **Conclusion**: Summarizes main points and restates the thesis.\n\n### 2. Transition Words\n- **Addition**: Furthermore, In addition, Moreover\n- **Contrast**: However, On the other hand, Nevertheless\n- **Consequence**: Therefore, As a result, Consequently\n- **Conclusion**: In conclusion, To summarize'),
+(8, 8, 'French Essay Writing', 'Writing an essay (la dissertation) in French requires structured formatting and standard connector words:\n\n### 1. Structural Components\n- **Introduction**: Includes context, definition of terms, and the **problématique** (thesis question).\n- **Plan**: Outlines the body parts (usually 2 or 3 parts).\n- **Conclusion**: Answers the problématique and offers an opening thought (l''ouverture).\n\n### 2. Logical Connectors (Connecteurs logiques)\n- **Firstly**: Tout d''abord, En premier lieu\n- **Adding information**: De plus, En outre\n- **Contrasting**: Cependant, Pourtant, Néanmoins\n- **Therefore**: Par conséquent, Ainsi\n- **In conclusion**: En conclusion, En somme'),
+(9, 9, 'German Essay Writing', 'Essays in German (der Aufsatz) follow formal styling and specific conjunction categories:\n\n### 1. Essential Conjunctions & Word Order\n- **Subordinating Conjunctions** (push the verb to the end): **weil** (because), **da** (since), **obwohl** (although).\n- **Coordinating Conjunctions** (do not change word order): **aber** (but), **denn** (because), **oder** (or).\n\n### 2. Formal Transitions\n- **Firstly**: Erstens, Zu Beginn\n- **In addition**: Darüber hinaus, Außerdem\n- **On the other hand**: Andererseits, Hingegen\n- **Therefore**: Daher, Deswegen\n- **In conclusion**: Zusammenfassend, Abschließend');
+
+-- Essay Writing Quizzes
+INSERT INTO Quizzes (quiz_id, topic_id, quiz_title, total_marks) VALUES
+(7, 7, 'English Essay Writing Quiz', 3),
+(8, 8, 'French Essay Writing Quiz', 3),
+(9, 9, 'German Essay Writing Quiz', 3);
+
+-- Essay Writing Questions
+INSERT INTO Qs (question_id, quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES
+(19, 7, 'Which transition word is best used to show contrast?', 'Furthermore', 'Consequently', 'However', 'Therefore', 'C'),
+(20, 7, 'What is the purpose of a thesis statement?', 'To outline the essay sections', 'To state the central argument of the essay', 'To introduce the writer''s name', 'To summarize the body paragraphs', 'B'),
+(21, 7, 'Where does the thesis statement typically appear?', 'In the conclusion', 'In the first body paragraph', 'At the end of the introduction', 'In the title', 'C'),
+(22, 8, 'Which connector means "However" or "Yet" in French?', 'De plus', 'Pourtant', 'Ainsi', 'Tout d''abord', 'B'),
+(23, 8, 'What is the key thesis question called in a French essay?', 'La problématique', 'La conclusion', 'Le paragraphe', 'L''introduction', 'A'),
+(24, 8, 'Which connector means "Firstly" in French?', 'En outre', 'Par conséquent', 'Tout d''abord', 'En conclusion', 'C'),
+(25, 9, 'Which subordinating conjunction means "although" in German?', 'weil', 'obwohl', 'aber', 'oder', 'B'),
+(26, 9, 'Which transition means "Darüber hinaus" in English?', 'On the other hand', 'Therefore', 'In addition', 'Firstly', 'C'),
+(27, 9, 'What word order effect does "weil" have in German?', 'It places the verb in position 1', 'It has no effect on word order', 'It pushes the conjugated verb to the end', 'It swaps the subject and the verb', 'C');
+
+

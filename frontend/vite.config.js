@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    strictPort: true, // Force port 3000 to prevent silent fallback to other unregistered ports
     open: true // Open browser on launch
   }
 });
