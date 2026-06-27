@@ -117,7 +117,66 @@ exports.getUserProgress = async (req, res) => {
       };
     }
 
-    // 6. Recent quiz attempts (excluding English)
+    // 6. Calculate user learning streak dynamically
+    const [attemptDates] = await db.query(
+      'SELECT attempt_date FROM Attempts WHERE user_id = ?',
+      [user_id]
+    );
+
+    const [challengeDates] = await db.query(
+      'SELECT last_claimed_at FROM DailyChallenge WHERE user_id = ?',
+      [user_id]
+    );
+
+    const activeDates = new Set();
+
+    attemptDates.forEach(row => {
+      if (row.attempt_date) {
+        const d = new Date(row.attempt_date);
+        const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        activeDates.add(localDate);
+      }
+    });
+
+    challengeDates.forEach(row => {
+      if (row.last_claimed_at) {
+        const d = new Date(row.last_claimed_at);
+        const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        activeDates.add(localDate);
+      }
+    });
+
+    let streakCount = 0;
+    if (activeDates.size > 0) {
+      const sortedDates = Array.from(activeDates).sort().reverse(); // Newest first
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+      // Streak is active if most recent activity was today or yesterday
+      if (sortedDates[0] === todayStr || sortedDates[0] === yesterdayStr) {
+        streakCount = 1;
+        let currentDate = new Date(sortedDates[0]);
+        
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = new Date(currentDate);
+          prevDate.setDate(prevDate.getDate() - 1);
+          const prevDateStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}-${String(prevDate.getDate()).padStart(2, '0')}`;
+          
+          if (sortedDates[i] === prevDateStr) {
+            streakCount++;
+            currentDate = prevDate;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+
+    // 7. Recent quiz attempts (excluding English)
     const [recentAttempts] = await db.query(
       `SELECT 
         a.attempt_id, 
@@ -146,7 +205,8 @@ exports.getUserProgress = async (req, res) => {
         overall_progress_percentage: overallProgress,
         languages: languagePerformance,
         daily_challenge: dailyChallenge,
-        recent_activity: recentAttempts
+        recent_activity: recentAttempts,
+        streak_count: streakCount
       }
     });
 

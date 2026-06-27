@@ -399,29 +399,34 @@ const DashboardPage = () => {
           
           <div className="tw-relative tw-z-10 tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center tw-justify-between tw-gap-6">
             <div>
-              <div className="tw-flex tw-items-center tw-gap-2.5 tw-mb-3">
+              <div className="tw-flex tw-items-center tw-flex-wrap tw-gap-2.5 tw-mb-3">
                 <span className="tw-inline-flex tw-items-center tw-gap-1 tw-px-3 tw-py-1 tw-rounded-full tw-text-[10px] tw-font-semibold tw-tracking-widest tw-bg-v-brown-dark/10 tw-text-v-brown-dark tw-border tw-border-v-brown-dark/20 tw-uppercase">
                   <Flame className="tw-w-3 tw-h-3 tw-text-v-brown-dark" />
                   Active Portal
                 </span>
                 <span className="tw-inline-flex tw-items-center tw-gap-1 tw-px-3 tw-py-1 tw-rounded-full tw-text-[10px] tw-font-semibold tw-tracking-widest tw-bg-v-brown-med/10 tw-text-v-brown-med tw-border tw-border-v-brown-med/20 tw-uppercase">
-                  🔥 5-Day Streak
+                  🔥 {data?.streak_count || 0}-Day Streak
                 </span>
+                <div className="tw-inline-flex tw-items-center tw-h-6 tw-px-3 tw-py-1 tw-rounded-full tw-text-[10px] tw-font-bold tw-tracking-widest tw-bg-v-brown-dark/5 tw-text-v-brown-dark/80 tw-border tw-border-v-brown-dark/10">
+                  <span className="tw-mr-1.5">🗣️</span>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={greetingIndex}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="tw-font-extrabold"
+                    >
+                      {greetings[greetingIndex]}!
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Multilingual rotating greeting logo */}
               <h1 className="tw-text-3xl md:tw-text-4xl tw-font-bold tw-tracking-tight tw-mb-2 tw-text-v-text-prim">
-                <motion.span
-                  key={greetingIndex}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="tw-bg-gradient-to-r tw-from-v-brown-dark tw-to-v-brown-med tw-bg-clip-text tw-text-transparent tw-mr-3 tw-font-extrabold"
-                >
-                  {greetings[greetingIndex]}!
-                </motion.span>
-                {user?.name}
+                Welcome back, {user?.name}
               </h1>
 
               <p className="tw-text-v-text-sec tw-text-sm md:tw-text-base tw-leading-relaxed tw-max-w-xl tw-m-0">
