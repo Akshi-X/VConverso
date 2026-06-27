@@ -1,76 +1,85 @@
-const mysql = require('mysql2/promise');
-const sqlite3 = require('sqlite3');
+let sqlite3 = null;
+let Pool = null;
+
 const path = require('path');
 const fs = require('fs');
 
-let dbType = 'mysql';
-let mysqlPool = null;
+let dbType = 'sqlite';
 let sqliteDb = null;
+let pgPool = null;
 
-// Load environment variables
-require('dotenv').config();
+// Load environment variables relative to this config file
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const dbHost = process.env.DB_HOST || 'localhost';
-const dbUser = process.env.DB_USER || 'root';
-const dbPassword = process.env.DB_PASSWORD || '';
-const dbName = process.env.DB_NAME || 'language_learning_db';
-const port = process.env.PORT || 5000;
+/**
+ * Helper to rename User table references to users for PostgreSQL reserved keyword compatibility
+ */
+function wrapUserTable(sql) {
+  return sql.replace(/\bUser\b/g, 'users');
+}
 
 /**
  * Initialize the Database Adapter
  */
 async function initDb() {
-  // Check if MySQL connection parameters are provided
-  const hasMysqlConfig = process.env.DB_HOST && process.env.DB_USER;
+  const databaseUrl = process.env.DATABASE_URL;
+  const dbTypeEnv = process.env.DB_TYPE || '';
+  const isPostgresRequested = dbTypeEnv.toLowerCase() === 'postgres' || dbTypeEnv.toLowerCase() === 'supabase';
 
-  if (hasMysqlConfig) {
+  // 1. Try PostgreSQL / Supabase if DATABASE_URL is provided OR if DB_TYPE is set to postgres/supabase
+  if (databaseUrl || isPostgresRequested) {
     try {
-      console.log(`[Database] Attempting to connect to MySQL at ${dbHost}...`);
+      console.log(`[Database] Attempting to connect to PostgreSQL (Supabase)...`);
+      
+      // Lazy load pg Pool
+      if (!Pool) {
+        Pool = require('pg').Pool;
+      }
 
-      // First, create a connection without database name to ensure the DB exists
-      const tempConnection = await mysql.createConnection({
-        host: dbHost,
-        user: dbUser,
-        password: dbPassword
-      });
-
-      await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-      await tempConnection.end();
-
-      // Now create the pool with the database specified
-      mysqlPool = mysql.createPool({
-        host: dbHost,
-        user: dbUser,
-        password: dbPassword,
-        database: dbName,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-      });
+      if (databaseUrl) {
+        pgPool = new Pool({
+          connectionString: databaseUrl,
+          ssl: {
+            rejectUnauthorized: false // Required for secure Supabase connections
+          }
+        });
+      } else {
+        pgPool = new Pool({
+          host: process.env.DB_HOST || 'localhost',
+          user: process.env.DB_USER || 'postgres',
+          password: process.env.DB_PASSWORD || '',
+          database: process.env.DB_NAME || 'postgres',
+          port: process.env.DB_PORT || 5432,
+          ssl: {
+            rejectUnauthorized: false
+          }
+        });
+      }
 
       // Test connection
-      const conn = await mysqlPool.getConnection();
-      console.log(`[Database] Successfully connected to MySQL database: "${dbName}"`);
-      conn.release();
+      const client = await pgPool.connect();
+      console.log(`[Database] Successfully connected to PostgreSQL (Supabase) database.`);
+      client.release();
 
-      dbType = 'mysql';
-
-      await ensureMysqlDailyChallengeTable();
+      dbType = 'postgres';
 
       // Check if tables exist, and seed if they are empty
-      await seedMysqlIfEmpty();
+      await seedPostgresIfEmpty();
       return;
     } catch (err) {
-      console.warn(`[Database WARNING] Failed to connect to MySQL: ${err.message}`);
-      console.log('[Database] Falling back to SQLite file database for a seamless local development experience.');
+      console.warn(`[Database WARNING] Failed to connect to PostgreSQL: ${err.message}`);
+      console.log('[Database] Falling back to SQLite local database options...');
     }
-  } else {
-    console.log('[Database] MySQL environment variables not provided. Using SQLite local fallback.');
   }
 
-  // Fallback to SQLite
+  // 2. Fallback to SQLite
   dbType = 'sqlite';
   const dbPath = path.join(__dirname, '..', 'database.sqlite');
+
+  // Lazy load sqlite3
+  if (!sqlite3) {
+    sqlite3 = require('sqlite3');
+  }
 
   sqliteDb = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -88,20 +97,58 @@ async function initDb() {
 }
 
 /**
- * Run a MySQL query
+ * Run a PostgreSQL query with automatic translation of MySQL/SQLite syntax to PostgreSQL
  */
-async function mysqlQuery(sql, params) {
-  return await mysqlPool.query(sql, params);
+async function postgresQuery(sql, params = []) {
+  let convertedSql = wrapUserTable(sql);
+
+  // Convert standard SQL parameter placeholders from ? to $1, $2, etc.
+  let index = 1;
+  convertedSql = convertedSql.replace(/\?/g, () => `$${index++}`);
+
+  // Emulate lastID/insertId behavior by appending RETURNING * for inserts
+  const isInsert = convertedSql.trim().toLowerCase().startsWith('insert');
+  if (isInsert && !convertedSql.toLowerCase().includes('returning')) {
+    convertedSql = convertedSql.trim();
+    if (convertedSql.endsWith(';')) {
+      convertedSql = convertedSql.slice(0, -1);
+    }
+    convertedSql += ' RETURNING *';
+  }
+
+  const res = await pgPool.query(convertedSql, params);
+
+  if (isInsert) {
+    let insertId = null;
+    if (res.rows && res.rows.length > 0) {
+      const firstRow = res.rows[0];
+      // Automatically detect primary key column (ends with _id or is id)
+      const idKey = Object.keys(firstRow).find(key => key.toLowerCase().endsWith('_id') || key.toLowerCase() === 'id');
+      if (idKey) {
+        insertId = firstRow[idKey];
+      }
+    }
+    const result = {
+      insertId: insertId,
+      affectedRows: res.rowCount
+    };
+    return [result, null];
+  } else if (convertedSql.trim().toLowerCase().startsWith('update') || convertedSql.trim().toLowerCase().startsWith('delete')) {
+    const result = {
+      affectedRows: res.rowCount
+    };
+    return [result, null];
+  } else {
+    // Return rows for SELECT queries
+    return [res.rows, null];
+  }
 }
 
 /**
  * Run an SQLite query with standard mysql2 format return [rows, fields]
  */
 function sqliteQuery(sql, params = []) {
-  // Convert standard SQL from MySQL to SQLite if needed
-  // SQLite uses ? format just like mysql2, so no changes to query params are needed.
   return new Promise((resolve, reject) => {
-    // If the statement is a SELECT, use sqliteDb.all
     const isSelect = sql.trim().toLowerCase().startsWith('select') ||
       sql.trim().toLowerCase().startsWith('pragma') ||
       sql.trim().toLowerCase().startsWith('show');
@@ -116,13 +163,11 @@ function sqliteQuery(sql, params = []) {
         }
       });
     } else {
-      // Use sqliteDb.run for INSERT, UPDATE, DELETE
       sqliteDb.run(sql, params, function (err) {
         if (err) {
           console.error(`[SQLite Error] Run: ${sql} | Error: ${err.message}`);
           reject(err);
         } else {
-          // Map sqlite result to mysql result structure
           const result = {
             insertId: this.lastID,
             affectedRows: this.changes
@@ -135,77 +180,39 @@ function sqliteQuery(sql, params = []) {
 }
 
 /**
- * Ensure MySQL DailyChallenge table exists for persisted bonus XP storage
+ * Seed PostgreSQL / Supabase if it was just created/empty
  */
-async function ensureMysqlDailyChallengeTable() {
+async function seedPostgresIfEmpty() {
   try {
-    await mysqlPool.query(`
-      CREATE TABLE IF NOT EXISTS DailyChallenge (
-        challenge_id INT PRIMARY KEY AUTO_INCREMENT,
-        user_id INT NOT NULL,
-        total_bonus_xp INT NOT NULL DEFAULT 0,
-        last_claimed_at DATETIME NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
-        UNIQUE KEY user_unique (user_id)
-      )
-    `);
+    // Check if the Language table exists in the database
+    const tableCheck = await pgPool.query(
+      "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'language')"
+    );
+    const exists = tableCheck.rows && tableCheck.rows[0] && tableCheck.rows[0].exists;
 
-    // Migrate legacy columns if the table exists from older schema versions.
-    const [bonusColumn] = await mysqlPool.query("SHOW COLUMNS FROM DailyChallenge LIKE 'bonus_xp'");
-    if (bonusColumn.length > 0) {
-      const [totalBonusColumn] = await mysqlPool.query("SHOW COLUMNS FROM DailyChallenge LIKE 'total_bonus_xp'");
-      if (totalBonusColumn.length === 0) {
-        await mysqlPool.query('ALTER TABLE DailyChallenge ADD COLUMN total_bonus_xp INT NOT NULL DEFAULT 0');
-        await mysqlPool.query('UPDATE DailyChallenge SET total_bonus_xp = bonus_xp');
-      }
-    }
+    if (!exists) {
+      console.log('[Database] PostgreSQL tables not found on Supabase. Importing schema and sample data...');
 
-    const [lastClaimedColumn] = await mysqlPool.query("SHOW COLUMNS FROM DailyChallenge LIKE 'last_claimed_at'");
-    const [claimedDateColumn] = await mysqlPool.query("SHOW COLUMNS FROM DailyChallenge LIKE 'claimed_date'");
-
-    if (lastClaimedColumn.length === 0) {
-      await mysqlPool.query('ALTER TABLE DailyChallenge ADD COLUMN last_claimed_at DATETIME NULL');
-    }
-
-    if (claimedDateColumn.length > 0) {
-      await mysqlPool.query('UPDATE DailyChallenge SET last_claimed_at = claimed_date WHERE last_claimed_at IS NULL');
-      await mysqlPool.query('ALTER TABLE DailyChallenge MODIFY COLUMN claimed_date DATETIME NULL DEFAULT NULL');
-    }
-  } catch (err) {
-    console.error('[Database ERROR] Could not ensure DailyChallenge table:', err.message);
-  }
-}
-
-/**
- * Seed MySQL if it was just created/empty
- */
-async function seedMysqlIfEmpty() {
-  try {
-    const [rows] = await mysqlPool.query("SHOW TABLES LIKE 'Language'");
-    if (rows.length === 0) {
-      console.log('[Database] MySQL tables not found. Importing schema and sample data...');
-
-      const schemaPath = path.join(__dirname, '..', '..', 'database', 'schema.sql');
+      const schemaPath = path.join(__dirname, '..', '..', 'database', 'schema_postgres.sql');
       if (fs.existsSync(schemaPath)) {
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-        // Split by semicolon and remove SQL comments
         const statements = schemaSql
           .split(';')
           .map(stmt => stmt.split('\n').filter(line => !line.trim().startsWith('--')).join('\n').trim())
           .filter(stmt => stmt.length > 0);
 
         for (const statement of statements) {
-          if (statement.toLowerCase().startsWith('use')) continue;
-          await mysqlPool.query(statement);
+          // Wrap User table name references in PostgreSQL double quotes dynamically
+          const pgStatement = wrapUserTable(statement);
+          await pgPool.query(pgStatement);
         }
-        console.log('[Database] MySQL schema imported and seeded successfully.');
+        console.log('[Database] PostgreSQL schema imported and seeded successfully.');
       } else {
-        console.warn('[Database WARNING] schema.sql not found at ' + schemaPath);
+        console.warn('[Database WARNING] schema_postgres.sql not found at ' + schemaPath);
       }
     }
   } catch (err) {
-    console.error('[Database ERROR] Error checking/seeding MySQL tables:', err.message);
+    console.error('[Database ERROR] Error checking/seeding PostgreSQL tables:', err.message);
   }
 }
 
@@ -215,7 +222,6 @@ async function seedMysqlIfEmpty() {
 function initSQLiteSchemaAndSeed() {
   return new Promise((resolve) => {
     sqliteDb.serialize(async () => {
-      // 1. Create tables
       sqliteDb.run(`
         CREATE TABLE IF NOT EXISTS User (
           user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -343,14 +349,12 @@ function initSQLiteSchemaAndSeed() {
         }
       });
 
-      // Check if languages exist
       sqliteDb.get("SELECT COUNT(*) as count FROM Language", [], async (err, row) => {
         if (row && row.count === 0) {
           console.log('[Database] SQLite database empty. Seeding sample language data...');
 
           const schemaPath = path.join(__dirname, '..', '..', 'database', 'schema.sql');
           if (fs.existsSync(schemaPath)) {
-            // Read lines and execute inserting statements (ignoring creates, use, and tables)
             const schemaSql = fs.readFileSync(schemaPath, 'utf8');
             const statements = schemaSql
               .split(';')
@@ -358,7 +362,6 @@ function initSQLiteSchemaAndSeed() {
               .filter(stmt => stmt.length > 0 && stmt.toLowerCase().startsWith('insert'));
 
             for (const statement of statements) {
-              // Convert escaped single quotes if any (schema.sql has double single quotes '' for SQL string escaping, which SQLite also supports)
               sqliteDb.run(statement, (insertErr) => {
                 if (insertErr) {
                   console.warn(`[Database WARNING] SQLite seed error: ${insertErr.message} on statement: ${statement}`);
@@ -378,8 +381,8 @@ function initSQLiteSchemaAndSeed() {
 
 // Wrapper query function that supports standard mysql2 query parameters
 async function query(sql, params) {
-  if (dbType === 'mysql') {
-    return await mysqlQuery(sql, params);
+  if (dbType === 'postgres') {
+    return await postgresQuery(sql, params);
   } else {
     return await sqliteQuery(sql, params);
   }
