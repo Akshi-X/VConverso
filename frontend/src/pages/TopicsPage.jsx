@@ -479,16 +479,7 @@ const TopicsPage = () => {
           {filteredTopics.map((topic, index) => {
             const meta = getMetadata(topic.topic_name);
             
-            // Generate elegant progressive mock completion state based on index for Spanish
-            let mockProgress = 0;
-            if (language?.language_name?.toLowerCase() === 'spanish') {
-              if (index === 0) mockProgress = 100;
-              else if (index === 1) mockProgress = 60;
-              else if (index === 2) mockProgress = 15;
-            } else {
-              // English/French/German basic progress states
-              if (index === 0) mockProgress = 100;
-            }
+            const progress = Math.round(topic.quiz_percentage || 0);
 
             return (
               <div className="col-md-6" key={topic.topic_id}>
@@ -497,7 +488,7 @@ const TopicsPage = () => {
                   topic={topic}
                   metadata={meta}
                   navigate={navigate}
-                  progress={mockProgress}
+                  progress={progress}
                 />
               </div>
             );

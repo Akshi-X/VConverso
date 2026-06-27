@@ -120,7 +120,9 @@ html body .custom-navbar .navbar-nav .nav-link:hover {
 /* Unified Premium Button System */
 .btn-premium-primary,
 .btn-primary,
-.tw-bg-gradient-to-r.tw-from-v-brown-dark {
+button.tw-bg-gradient-to-r.tw-from-v-brown-dark,
+a.tw-bg-gradient-to-r.tw-from-v-brown-dark,
+.btn.tw-bg-gradient-to-r.tw-from-v-brown-dark {
   background: #6B3E2E !important;
   color: #FFFFFF !important;
   border: none !important;
@@ -133,7 +135,9 @@ html body .custom-navbar .navbar-nav .nav-link:hover {
 
 .btn-premium-primary:hover,
 .btn-primary:hover,
-.tw-bg-gradient-to-r.tw-from-v-brown-dark:hover {
+button.tw-bg-gradient-to-r.tw-from-v-brown-dark:hover,
+a.tw-bg-gradient-to-r.tw-from-v-brown-dark:hover,
+.btn.tw-bg-gradient-to-r.tw-from-v-brown-dark:hover {
   background: #7A4B39 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(107, 62, 46, 0.22) !important;

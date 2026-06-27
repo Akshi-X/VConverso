@@ -31,6 +31,7 @@ const topicRoutes = require('./routes/topics');
 const noteRoutes = require('./routes/notes');
 const quizRoutes = require('./routes/quizzes'); // handles /quizzes, /questions, /submit-quiz
 const progressRoutes = require('./routes/progress');
+const translateRoutes = require('./routes/translate');
 
 // Register Routes
 app.use('/api/auth', authRoutes);
@@ -39,6 +40,7 @@ app.use('/api/topics', topicRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api', quizRoutes); // Mounted directly under /api to support exact paths
 app.use('/api/progress', progressRoutes);
+app.use('/api/translate', translateRoutes);
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
@@ -55,8 +57,8 @@ async function startServer() {
     // Initialize Database (attempts MySQL, falls back to SQLite)
     await db.initDb();
 
-    // Bind Port
-    app.listen(PORT, () => {
+    // Bind Port to all network interfaces (0.0.0.0) so external devices can reach it
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`=============================================================`);
       console.log(`  SERVER RUNNING IN PRODUCTION/DEV MODE                      `);
       console.log(`  API Endpoint: http://localhost:${PORT}                      `);

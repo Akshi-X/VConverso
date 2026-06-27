@@ -21,6 +21,8 @@ exports.getNotesByTopic = async (req, res) => {
       });
     }
 
+
+
     // 2. Retrieve all notes associated with this topic
     const [notes] = await db.query(
       'SELECT * FROM Notes WHERE topic_id = ? ORDER BY note_id ASC',

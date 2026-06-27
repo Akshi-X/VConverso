@@ -10,15 +10,47 @@ const ModuleCard = ({ index, topic, metadata, navigate, progress = 0 }) => {
   // Determine button icon color based on warm theme
   const learnBtnIconStyle = { color: 'var(--color-brown-dark)' };
 
+  const isQuizLocked = !!topic.is_quiz_locked;
+
   return (
-    <div className="module-card h-100 p-4 d-flex flex-column animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+    <div 
+      className="module-card h-100 p-4 d-flex flex-column animate-fade-in" 
+      style={{ 
+        animationDelay: `${index * 0.05}s`
+      }}
+    >
       
       {/* Top badges bar */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <span className="fw-bold text-uppercase tracking-wider small" style={{ color: 'var(--color-brown-med)', fontSize: '0.78rem' }}>
           Module {index < 9 ? `0${index + 1}` : index + 1}
         </span>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 align-items-center">
+          {isQuizLocked ? (
+            <span 
+              className="badge rounded-pill font-semibold px-2.5 py-1.5 d-inline-flex align-items-center gap-1" 
+              style={{ 
+                background: 'rgba(220, 53, 69, 0.08)', 
+                color: '#DC3545', 
+                border: '1px solid rgba(220, 53, 69, 0.15)',
+                fontSize: '0.72rem'
+              }}
+            >
+              <i className="bi bi-lock-fill"></i> Quiz Locked (Req. 65%)
+            </span>
+          ) : (
+            <span 
+              className="badge rounded-pill font-semibold px-2.5 py-1.5 d-inline-flex align-items-center gap-1" 
+              style={{ 
+                background: 'rgba(40, 167, 69, 0.08)', 
+                color: '#28A745', 
+                border: '1px solid rgba(40, 167, 69, 0.15)',
+                fontSize: '0.72rem'
+              }}
+            >
+              <i className="bi bi-unlock-fill"></i> Quiz Unlocked
+            </span>
+          )}
           <span 
             className="badge rounded-pill font-semibold px-2.5 py-1.5" 
             style={{ 
@@ -106,7 +138,8 @@ const ModuleCard = ({ index, topic, metadata, navigate, progress = 0 }) => {
         </div>
         <div className="col-6">
           <button
-            onClick={() => navigate(`/quiz/${topic.topic_id}`)}
+            onClick={() => !isQuizLocked && navigate(`/quiz/${topic.topic_id}`)}
+            disabled={isQuizLocked}
             className="btn btn-premium-primary w-100 py-2 d-flex align-items-center justify-content-center gap-1.5 text-truncate"
             style={{ fontSize: '0.88rem' }}
           >

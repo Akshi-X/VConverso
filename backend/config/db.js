@@ -65,6 +65,11 @@ async function initDb() {
 
       // Check if tables exist, and seed if they are empty
       await seedPostgresIfEmpty();
+      
+      // Ensure daily challenge tracking columns exist in PostgreSQL
+      await pgPool.query('ALTER TABLE DailyChallenge ADD COLUMN IF NOT EXISTS translations_count INT DEFAULT 0;').catch(() => {});
+      await pgPool.query('ALTER TABLE DailyChallenge ADD COLUMN IF NOT EXISTS last_activity_date VARCHAR(10) NULL;').catch(() => {});
+
       return;
     } catch (err) {
       console.warn(`[Database WARNING] Failed to connect to PostgreSQL: ${err.message}`);
@@ -341,6 +346,12 @@ function initSQLiteSchemaAndSeed() {
           }
           if (!names.includes('last_claimed_at')) {
             sqliteDb.run('ALTER TABLE DailyChallenge ADD COLUMN last_claimed_at TEXT;');
+          }
+          if (!names.includes('translations_count')) {
+            sqliteDb.run('ALTER TABLE DailyChallenge ADD COLUMN translations_count INTEGER NOT NULL DEFAULT 0;');
+          }
+          if (!names.includes('last_activity_date')) {
+            sqliteDb.run('ALTER TABLE DailyChallenge ADD COLUMN last_activity_date TEXT;');
           }
           if (names.includes('bonus_xp') && names.includes('claimed_date') && !names.includes('total_bonus_xp')) {
             sqliteDb.run('UPDATE DailyChallenge SET total_bonus_xp = bonus_xp WHERE total_bonus_xp = 0;');

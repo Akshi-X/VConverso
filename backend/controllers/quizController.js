@@ -8,6 +8,15 @@ exports.getQuizzesByTopic = async (req, res) => {
   const { topic_id } = req.params;
 
   try {
+    const userId = req.user.user_id;
+    const { isTopicLocked } = require('../utils/lockCheck');
+    if (await isTopicLocked(userId, topic_id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'This quiz is locked. You must complete the previous topic and pass its quiz with at least 65% first.'
+      });
+    }
+
     const [quizzes] = await db.query(
       'SELECT * FROM Quizzes WHERE topic_id = ? ORDER BY quiz_id ASC',
       [topic_id]
@@ -44,6 +53,16 @@ exports.getQuestionsByQuiz = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Selected quiz not found.'
+      });
+    }
+
+    const userId = req.user.user_id;
+    const topicId = quizInfo[0].topic_id;
+    const { isTopicLocked } = require('../utils/lockCheck');
+    if (await isTopicLocked(userId, topicId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'This quiz is locked. You must complete the previous topic and pass its quiz with at least 65% first.'
       });
     }
 

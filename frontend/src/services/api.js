@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-// Resolve backend API base URL with flexible fallbacks
 const API_BASE_URL = 
   import.meta.env.VITE_API_URL || 
   import.meta.env.REACT_APP_API_URL || 
-  'http://localhost:5000/api';
+  `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000/api`;
 
 console.log(`[API Service] Requesting backend at base: ${API_BASE_URL}`);
 

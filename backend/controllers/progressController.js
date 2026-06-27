@@ -86,7 +86,7 @@ exports.getUserProgress = async (req, res) => {
     );
 
     const [dailyChallengeRows] = await db.query(
-      `SELECT total_bonus_xp, last_claimed_at
+      `SELECT total_bonus_xp, last_claimed_at, translations_count, last_activity_date
        FROM DailyChallenge
        WHERE user_id = ?
        LIMIT 1`,
@@ -97,7 +97,9 @@ exports.getUserProgress = async (req, res) => {
       claimed: false,
       total_bonus_xp: 0,
       last_claimed_at: null,
-      next_claim_at: null
+      next_claim_at: null,
+      translations_count: 0,
+      completed: false
     };
 
     if (dailyChallengeRows && dailyChallengeRows.length > 0) {
@@ -109,11 +111,17 @@ exports.getUserProgress = async (req, res) => {
       const claimed = lastClaimedAt && timeSinceClaimMs < cooldownMs;
       const nextClaimAt = claimed ? new Date(lastClaimedAt.getTime() + cooldownMs).toISOString() : null;
 
+      const todayStr = now.toISOString().slice(0, 10);
+      const isTodayActivity = row.last_activity_date === todayStr;
+      const count = isTodayActivity ? (row.translations_count || 0) : 0;
+
       dailyChallenge = {
         claimed,
         total_bonus_xp: row.total_bonus_xp || 0,
         last_claimed_at: row.last_claimed_at,
-        next_claim_at: nextClaimAt
+        next_claim_at: nextClaimAt,
+        translations_count: count,
+        completed: count >= 5
       };
     }
 
@@ -156,10 +164,15 @@ exports.getUserProgress = async (req, res) => {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
+      const parseLocalDate = (dateStr) => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      };
+
       // Streak is active if most recent activity was today or yesterday
       if (sortedDates[0] === todayStr || sortedDates[0] === yesterdayStr) {
         streakCount = 1;
-        let currentDate = new Date(sortedDates[0]);
+        let currentDate = parseLocalDate(sortedDates[0]);
         
         for (let i = 1; i < sortedDates.length; i++) {
           const prevDate = new Date(currentDate);
@@ -229,64 +242,57 @@ exports.claimDailyChallenge = async (req, res) => {
 
   try {
     const [existingRows] = await db.query(
-      'SELECT total_bonus_xp, last_claimed_at FROM DailyChallenge WHERE user_id = ? LIMIT 1',
+      'SELECT total_bonus_xp, last_claimed_at, translations_count, last_activity_date FROM DailyChallenge WHERE user_id = ? LIMIT 1',
       [userId]
     );
 
     const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
     const cooldownMs = 24 * 60 * 60 * 1000;
     let nextClaimAt = null;
 
-    if (existingRows && existingRows.length > 0) {
-      const existing = existingRows[0];
-      const lastClaimedAt = existing.last_claimed_at ? new Date(existing.last_claimed_at) : null;
-      const timeSinceLastClaim = lastClaimedAt ? now.getTime() - lastClaimedAt.getTime() : Number.MAX_SAFE_INTEGER;
+    if (!existingRows || existingRows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Daily mission incomplete. You have only completed 0 / 5 translations today.'
+      });
+    }
 
-      if (lastClaimedAt && timeSinceLastClaim < cooldownMs) {
-        nextClaimAt = new Date(lastClaimedAt.getTime() + cooldownMs).toISOString();
-        return res.status(400).json({
-          success: false,
-          message: `Daily XP can only be claimed once every 24 hours. Next claim available at ${nextClaimAt}.`,
-          daily_challenge: {
-            claimed: true,
-            total_bonus_xp: existing.total_bonus_xp || 0,
-            last_claimed_at: existing.last_claimed_at,
-            next_claim_at: nextClaimAt
-          }
-        });
-      }
+    const existing = existingRows[0];
+    const isTodayActivity = existing.last_activity_date === todayStr;
+    const count = isTodayActivity ? (existing.translations_count || 0) : 0;
 
-      const newTotal = (existing.total_bonus_xp || 0) + bonusXp;
-      await db.query(
-        'UPDATE DailyChallenge SET total_bonus_xp = ?, last_claimed_at = ? WHERE user_id = ?',
-        [newTotal, now.toISOString().replace('T', ' ').slice(0, 19), userId]
-      );
+    if (count < 5) {
+      return res.status(400).json({
+        success: false,
+        message: `Daily mission incomplete. You have only completed ${count} / 5 translations today.`
+      });
+    }
 
-      nextClaimAt = new Date(now.getTime() + cooldownMs).toISOString();
-      return res.status(200).json({
-        success: true,
-        message: 'Daily challenge claimed successfully.',
+    const lastClaimedAt = existing.last_claimed_at ? new Date(existing.last_claimed_at) : null;
+    const timeSinceLastClaim = lastClaimedAt ? now.getTime() - lastClaimedAt.getTime() : Number.MAX_SAFE_INTEGER;
+
+    if (lastClaimedAt && timeSinceLastClaim < cooldownMs) {
+      nextClaimAt = new Date(lastClaimedAt.getTime() + cooldownMs).toISOString();
+      return res.status(400).json({
+        success: false,
+        message: `Daily XP can only be claimed once every 24 hours. Next claim available at ${nextClaimAt}.`,
         daily_challenge: {
           claimed: true,
-          total_bonus_xp: newTotal,
-          last_claimed_at: now.toISOString(),
-          next_claim_at: nextClaimAt
+          total_bonus_xp: existing.total_bonus_xp || 0,
+          last_claimed_at: existing.last_claimed_at,
+          next_claim_at: nextClaimAt,
+          translations_count: count,
+          completed: true
         }
       });
     }
 
-    const totalXp = bonusXp;
-    if (db.getDbType() === 'mysql') {
-      await db.query(
-        'INSERT INTO DailyChallenge (user_id, total_bonus_xp, last_claimed_at) VALUES (?, ?, ?)',
-        [userId, totalXp, now.toISOString().replace('T', ' ').slice(0, 19)]
-      );
-    } else {
-      await db.query(
-        'INSERT INTO DailyChallenge (user_id, total_bonus_xp, last_claimed_at) VALUES (?, ?, ?)',
-        [userId, totalXp, now.toISOString()]
-      );
-    }
+    const newTotal = (existing.total_bonus_xp || 0) + bonusXp;
+    await db.query(
+      'UPDATE DailyChallenge SET total_bonus_xp = ?, last_claimed_at = ? WHERE user_id = ?',
+      [newTotal, now.toISOString().replace('T', ' ').slice(0, 19), userId]
+    );
 
     nextClaimAt = new Date(now.getTime() + cooldownMs).toISOString();
     return res.status(200).json({
@@ -294,9 +300,11 @@ exports.claimDailyChallenge = async (req, res) => {
       message: 'Daily challenge claimed successfully.',
       daily_challenge: {
         claimed: true,
-        total_bonus_xp: totalXp,
+        total_bonus_xp: newTotal,
         last_claimed_at: now.toISOString(),
-        next_claim_at: nextClaimAt
+        next_claim_at: nextClaimAt,
+        translations_count: count,
+        completed: true
       }
     });
   } catch (err) {

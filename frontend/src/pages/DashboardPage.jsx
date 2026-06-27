@@ -24,6 +24,12 @@ import {
   PlayCircle,
   HelpCircle,
   X,
+  ChevronDown,
+  Repeat,
+  Copy,
+  Check,
+  Loader2,
+  Volume2,
 } from 'lucide-react';
 
 const quotes = [
@@ -43,7 +49,7 @@ const DashboardPage = () => {
   const [error, setError] = useState('');
   
   // Interactive Daily Challenge States
-  const [dailyChallenge, setDailyChallenge] = useState({ claimed: false, total_bonus_xp: 0, next_claim_at: null });
+  const [dailyChallenge, setDailyChallenge] = useState({ claimed: false, total_bonus_xp: 0, next_claim_at: null, translations_count: 0, completed: false });
   const [showConfetti, setShowConfetti] = useState(false);
 
   // UI States
@@ -52,6 +58,16 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedLanguageToUnenroll, setSelectedLanguageToUnenroll] = useState(null);
   const [actionLoading, setActionLoading] = useState(null); // 'enroll-id' or 'unenroll-id'
+
+  // Translate Tool States
+  const [translateText, setTranslateText] = useState('');
+  const [translatedResult, setTranslatedResult] = useState('');
+  const [translateFrom, setTranslateFrom] = useState('es');
+  const [translateTo, setTranslateTo] = useState('en');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [pronunciation, setPronunciation] = useState('');
 
   // Dynamic welcome greetings array
   const greetings = ['Bonjour', 'Hola', 'Hallo', 'Welcome', 'Salve', 'Konnichiwa'];
@@ -81,7 +97,7 @@ const DashboardPage = () => {
     try {
       const response = await api.get(`/progress/${user.user_id}`);
       setData(response.data.analytics);
-      setDailyChallenge(response.data.analytics.daily_challenge || { claimed: false, total_bonus_xp: 0, next_claim_at: null });
+      setDailyChallenge(response.data.analytics.daily_challenge || { claimed: false, total_bonus_xp: 0, next_claim_at: null, translations_count: 0, completed: false });
     } catch (err) {
       console.error('[Dashboard API Error]:', err);
       setError('Failed to establish connection to premium syllabus networks. Ensure database services are running.');
@@ -151,6 +167,69 @@ const DashboardPage = () => {
     } catch (err) {
       console.error('[Daily Challenge Claim Error]:', err);
       alert(err.response?.data?.message || 'Failed to claim daily challenge XP.');
+    }
+  };
+
+  // Translate Tool Handlers
+  const handleTranslate = async () => {
+    if (!translateText.trim()) {
+      setTranslatedResult('');
+      setPronunciation('');
+      return;
+    }
+    setIsTranslating(true);
+    setTranslateError('');
+    try {
+      const response = await api.post('/translate', {
+        text: translateText,
+        from: translateFrom,
+        to: translateTo
+      });
+      if (response.data.success) {
+        setTranslatedResult(response.data.translatedText);
+        setPronunciation(response.data.pronunciation || '');
+      } else {
+        setTranslateError(response.data.message || 'Translation failed');
+      }
+    } catch (err) {
+      setTranslateError(err.response?.data?.message || 'Error occurred during translation.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleSwapLanguages = () => {
+    const temp = translateFrom;
+    setTranslateFrom(translateTo);
+    setTranslateTo(temp);
+    if (translatedResult) {
+      setTranslateText(translatedResult);
+      setTranslatedResult(translateText);
+      setPronunciation('');
+    }
+  };
+
+  const handleCopyToClipboard = () => {
+    if (!translatedResult) return;
+    navigator.clipboard.writeText(translatedResult);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSpeakText = (text, langCode) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const localeMap = {
+        en: 'en-US',
+        es: 'es-ES',
+        fr: 'fr-FR',
+        de: 'de-DE'
+      };
+      utterance.lang = localeMap[langCode] || langCode;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      console.warn('Text-to-speech not supported in this browser.');
     }
   };
 
@@ -241,6 +320,173 @@ const DashboardPage = () => {
   const totalClassroomXP = (languages?.reduce((sum, lang) => sum + (lang.total_score || 0), 0) || 0) + (dailyChallenge?.total_bonus_xp || 0);
   const isPolyglotLegend = enrolledLanguages.length >= 2;
 
+  const renderTranslateTool = () => {
+    const supportedLangs = [
+      { code: 'en', name: 'English', flag: '🇬🇧' },
+      { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+      { code: 'fr', name: 'French', flag: '🇫🇷' },
+      { code: 'de', name: 'German', flag: '🇩🇪' },
+    ];
+
+    return (
+      <div className="tw-flex tw-flex-col tw-gap-6 tw-w-full tw-bg-v-card tw-border tw-border-v-brown-med/15 tw-p-6 md:tw-p-8 tw-rounded-3xl tw-shadow-md">
+        <div>
+          <h2 className="tw-text-xl tw-font-bold tw-text-v-brown-dark tw-mb-1 tw-flex tw-items-center tw-gap-2">
+            <Globe className="tw-w-5 tw-h-5" /> Instant Multi-Translation
+          </h2>
+          <p className="tw-text-xs tw-text-v-text-muted tw-mb-0">
+            Translate seamlessly between Spanish, English, French, and German in real-time.
+          </p>
+        </div>
+
+        {/* Translation Work Area */}
+        <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-12 tw-gap-4 tw-items-stretch">
+          {/* Source Language Column */}
+          <div className="md:tw-col-span-5 tw-flex tw-flex-col tw-gap-2">
+            <label className="tw-text-[11px] tw-font-bold tw-tracking-widest tw-text-v-text-sec tw-uppercase">
+              Translate From
+            </label>
+            <div className="tw-relative">
+              <select
+                value={translateFrom}
+                onChange={(e) => setTranslateFrom(e.target.value)}
+                className="tw-w-full tw-pl-4 tw-pr-10 tw-py-3 tw-rounded-xl tw-border tw-border-v-brown-med/20 tw-bg-[#F5EFE6] tw-text-sm tw-font-bold tw-text-[#2D1F18] focus:tw-outline-none focus:tw-border-v-brown-dark tw-appearance-none"
+              >
+                {supportedLangs.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+              <div className="tw-pointer-events-none tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-px-4 tw-text-v-brown-dark">
+                <ChevronDown className="tw-w-4 tw-h-4" />
+              </div>
+            </div>
+
+            <div className="tw-relative tw-w-full tw-h-48">
+              <textarea
+                value={translateText}
+                onChange={(e) => setTranslateText(e.target.value)}
+                placeholder="Type your phrase or paste text here to translate..."
+                className="tw-w-full tw-h-full tw-p-4 tw-rounded-2xl tw-border tw-border-v-brown-med/20 tw-bg-white tw-text-sm tw-text-v-text-prim placeholder-v-text-muted focus:tw-outline-none focus:tw-border-v-brown-dark focus:tw-ring-2 focus:tw-ring-v-brown-dark/10 tw-resize-none tw-transition-all"
+              />
+              {translateText && (
+                <button
+                  type="button"
+                  onClick={() => handleSpeakText(translateText, translateFrom)}
+                  className="tw-absolute tw-bottom-3.5 tw-right-3.5 tw-bg-[#EFE4D6] hover:tw-bg-white tw-text-v-brown-dark tw-p-2 tw-rounded-lg tw-border tw-border-v-brown-med/15 tw-transition-all hover:tw-scale-105 active:tw-scale-95 tw-flex tw-items-center tw-justify-center tw-shadow-sm"
+                  title="Listen to pronunciation"
+                >
+                  <Volume2 className="tw-w-3.5 tw-h-3.5" />
+                </button>
+              )}
+            </div>
+
+          </div>
+
+          {/* Action / Swap Button Column */}
+          <div className="md:tw-col-span-2 tw-flex md:tw-flex-col tw-items-center tw-justify-center tw-gap-4">
+            <button
+              onClick={handleSwapLanguages}
+              type="button"
+              className="tw-bg-[#EFE4D6] hover:tw-bg-[#F5EFE6] tw-text-v-brown-dark tw-p-3.5 tw-rounded-xl tw-border tw-border-v-brown-med/20 tw-transition-all hover:tw-scale-105 active:tw-scale-95 tw-shadow-sm tw-inline-flex tw-items-center tw-justify-center"
+              title="Swap Languages"
+            >
+              <Repeat className="tw-w-5 tw-h-5" />
+            </button>
+            
+            <button
+              onClick={handleTranslate}
+              disabled={isTranslating || !translateText.trim()}
+              className="tw-bg-gradient-to-r tw-from-v-brown-dark tw-to-v-brown-med hover:tw-from-v-brown-hover hover:tw-to-v-brown-dark disabled:tw-from-zinc-300 disabled:tw-to-zinc-400 disabled:tw-cursor-not-allowed tw-text-white tw-px-5 tw-py-3.5 tw-rounded-xl tw-text-sm tw-font-bold tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-2 tw-shadow-sm tw-flex-1 md:tw-flex-initial"
+            >
+              {isTranslating ? (
+                <>
+                  <Loader2 className="tw-w-4 tw-h-4 tw-animate-spin" /> Translating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="tw-w-4 tw-h-4" /> Translate
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Target Language Column */}
+          <div className="md:tw-col-span-5 tw-flex tw-flex-col tw-gap-2">
+            <label className="tw-text-[11px] tw-font-bold tw-tracking-widest tw-text-v-text-sec tw-uppercase">
+              Translate To
+            </label>
+            <div className="tw-relative">
+              <select
+                value={translateTo}
+                onChange={(e) => setTranslateTo(e.target.value)}
+                className="tw-w-full tw-pl-4 tw-pr-10 tw-py-3 tw-rounded-xl tw-border tw-border-v-brown-med/20 tw-bg-[#F5EFE6] tw-text-sm tw-font-bold tw-text-[#2D1F18] focus:tw-outline-none focus:tw-border-v-brown-dark tw-appearance-none"
+              >
+                {supportedLangs.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+              <div className="tw-pointer-events-none tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-px-4 tw-text-v-brown-dark">
+                <ChevronDown className="tw-w-4 tw-h-4" />
+              </div>
+            </div>
+
+            <div className="tw-relative tw-w-full tw-h-48">
+              <textarea
+                value={translatedResult}
+                readOnly
+                placeholder="Translation result will appear here..."
+                className="tw-w-full tw-h-full tw-p-4 tw-rounded-2xl tw-border tw-border-v-brown-med/20 tw-bg-[#F5EFE6]/50 tw-text-sm tw-text-v-text-prim placeholder-v-text-muted focus:tw-outline-none tw-resize-none"
+              />
+
+              {translatedResult && (
+                <div className="tw-absolute tw-bottom-3.5 tw-right-3.5 tw-flex tw-items-center tw-gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakText(translatedResult, translateTo)}
+                    className="tw-bg-[#EFE4D6] hover:tw-bg-white tw-text-v-brown-dark tw-p-2 tw-rounded-lg tw-border tw-border-v-brown-med/15 tw-transition-all hover:tw-scale-105 active:tw-scale-95 tw-flex tw-items-center tw-justify-center tw-shadow-sm"
+                    title="Listen to translation pronunciation"
+                  >
+                    <Volume2 className="tw-w-3.5 tw-h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyToClipboard}
+                    className="tw-bg-[#EFE4D6] hover:tw-bg-white tw-text-v-brown-dark tw-p-2 tw-rounded-lg tw-border tw-border-v-brown-med/15 tw-transition-all hover:tw-scale-105 active:tw-scale-95 tw-flex tw-items-center tw-gap-1.5 tw-text-xs tw-font-bold tw-shadow-sm"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="tw-w-3.5 tw-h-3.5 tw-text-green-600" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="tw-w-3.5 tw-h-3.5" /> Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+            {pronunciation && (
+              <p className="tw-text-xs tw-italic tw-text-[#8B5A3C] tw-mt-1 tw-mb-0 tw-px-1">
+                Pronunciation: <span className="tw-font-semibold">{pronunciation}</span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {translateError && (
+          <div className="tw-p-4 tw-rounded-xl tw-bg-red-500/10 tw-border tw-border-red-500/20 tw-text-[#991B1B] tw-text-xs tw-font-semibold">
+            ⚠️ {translateError}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="tw-relative tw-w-full tw-min-h-screen tw-bg-v-bg tw-text-v-text-prim tw-font-sans tw-overflow-x-hidden tw-flex">
       
@@ -323,6 +569,19 @@ const DashboardPage = () => {
           </Link>
 
           <button
+            onClick={() => setActiveTab('translate')}
+            className={`tw-w-full tw-h-12 tw-flex tw-items-center tw-gap-3.5 tw-px-4 tw-rounded-xl tw-font-semibold tw-text-sm tw-transition-all tw-duration-250 tw-border tw-border-none tw-outline-none ${
+              activeTab === 'translate'
+                ? 'tw-bg-[#6B3E2E] tw-text-white tw-shadow-sm'
+                : 'tw-text-[#6B3E2E] tw-bg-transparent hover:tw-bg-[#EFE4D6]'
+            }`}
+          >
+            <Globe className={`tw-w-4 tw-h-4 ${activeTab === 'translate' ? 'tw-text-white' : 'tw-text-[#6B3E2E]'}`} />
+            Translate Tool
+          </button>
+
+
+          <button
             onClick={() => setDrawerOpen(true)}
             className="tw-w-full tw-h-12 tw-flex tw-items-center tw-gap-3.5 tw-px-4 tw-rounded-xl tw-font-semibold tw-text-sm tw-transition-all tw-duration-250 tw-text-[#6B3E2E] tw-bg-transparent hover:tw-bg-[#EFE4D6] tw-border-none tw-outline-none"
           >
@@ -379,6 +638,14 @@ const DashboardPage = () => {
               <Compass className="tw-w-4 tw-h-4" />
             </Link>
             <button
+              onClick={() => setActiveTab(activeTab === 'translate' ? 'dashboard' : 'translate')}
+              className={`tw-p-2 tw-rounded-lg tw-border tw-border-[#C7B299]/30 tw-transition-all tw-inline-flex tw-items-center tw-justify-center ${
+                activeTab === 'translate' ? 'tw-bg-[#6B3E2E] tw-text-white' : 'tw-bg-[#EFE4D6] tw-text-[#6B3E2E] hover:tw-bg-[#F5EFE6]'
+              }`}
+            >
+              <Globe className="tw-w-4 tw-h-4" />
+            </button>
+            <button
               onClick={() => setDrawerOpen(true)}
               className="tw-bg-[#EFE4D6] tw-text-[#6B3E2E] tw-p-2 tw-rounded-lg tw-border tw-border-[#C7B299]/30 hover:tw-bg-[#F5EFE6] tw-transition-all"
             >
@@ -393,8 +660,11 @@ const DashboardPage = () => {
           </div>
         </header>
 
-        {/* SECTION 1: CINEMATIC WELCOME BANNER */}
-        <section className="tw-relative tw-w-full tw-rounded-3xl tw-bg-v-card tw-border tw-border-v-brown-med/15 tw-p-6 md:tw-p-8 tw-overflow-hidden tw-shadow-md">
+        {activeTab === 'dashboard' ? (
+          <>
+            {/* SECTION 1: CINEMATIC WELCOME BANNER */}
+            <section className="tw-relative tw-w-full tw-rounded-3xl tw-bg-v-card tw-border tw-border-v-brown-med/15 tw-p-6 md:tw-p-8 tw-overflow-hidden tw-shadow-md">
+
           <div className="tw-absolute tw-inset-0 tw-bg-gradient-to-r tw-from-v-brown-dark/5 tw-to-v-brown-med/5 tw-pointer-events-none" />
           
           <div className="tw-relative tw-z-10 tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center tw-justify-between tw-gap-6">
@@ -582,7 +852,7 @@ const DashboardPage = () => {
                       {/* Syllabus Progress */}
                       <div className="tw-mb-5 tw-border-t tw-border-v-brown-med/10 tw-pt-4">
                         <div className="tw-flex tw-justify-between tw-items-center tw-text-[10px] tw-mb-1.5">
-                          <span className="tw-text-v-text-muted tw-uppercase tw-tracking-widest">Syllabus Accuracy</span>
+                          <span className="tw-text-v-text-muted tw-uppercase tw-tracking-widest">Syllabus Completion</span>
                           <span className="tw-font-bold tw-text-v-brown-dark">{Math.round(lang.progress_percentage)}%</span>
                         </div>
                         <div className="tw-w-full tw-h-1.5 tw-bg-v-bg-sec tw-rounded-full tw-overflow-hidden">
@@ -640,10 +910,15 @@ const DashboardPage = () => {
                 {/* Progress bar */}
                 <div className="tw-flex tw-justify-between tw-items-center tw-text-[9px] tw-text-v-text-muted tw-mb-1.5">
                   <span>Workout status</span>
-                  <span className="tw-text-v-text-prim">1 / 1 Completed</span>
+                  <span className="tw-text-v-text-prim">
+                    {Math.min(dailyChallenge.translations_count || 0, 5)} / 5 Completed
+                  </span>
                 </div>
                 <div className="tw-w-full tw-h-1.5 tw-bg-v-bg tw-rounded-full tw-overflow-hidden">
-                  <div className="tw-w-full tw-h-full tw-bg-v-brown-dark" />
+                  <div 
+                    className="tw-h-full tw-bg-v-brown-dark tw-transition-all tw-duration-500" 
+                    style={{ width: `${(Math.min(dailyChallenge.translations_count || 0, 5) / 5) * 100}%` }}
+                  />
                 </div>
               </div>
 
@@ -655,12 +930,14 @@ const DashboardPage = () => {
               {/* Claim Challenge Button with click microinteraction */}
               <motion.button
                 onClick={claimDailyChallenge}
-                disabled={dailyChallenge.claimed}
-                whileHover={!dailyChallenge.claimed ? { scale: 1.02 } : {}}
-                whileTap={!dailyChallenge.claimed ? { scale: 0.98 } : {}}
+                disabled={dailyChallenge.claimed || !dailyChallenge.completed}
+                whileHover={(!dailyChallenge.claimed && dailyChallenge.completed) ? { scale: 1.02 } : {}}
+                whileTap={(!dailyChallenge.claimed && dailyChallenge.completed) ? { scale: 0.98 } : {}}
                 className={`tw-w-full tw-py-3 tw-rounded-xl tw-font-bold tw-text-xs tw-transition-all tw-flex tw-items-center tw-justify-center tw-gap-1.5 ${
                   dailyChallenge.claimed
                     ? 'tw-bg-v-bg-sec tw-text-v-text-muted tw-border tw-border-v-brown-med/15 tw-cursor-default'
+                    : !dailyChallenge.completed
+                    ? 'tw-bg-v-bg-sec tw-text-v-text-muted tw-border tw-border-v-brown-med/10 tw-cursor-not-allowed'
                     : 'tw-bg-gradient-to-r tw-from-v-brown-dark tw-to-v-brown-med hover:tw-from-v-brown-hover hover:tw-to-v-brown-dark tw-text-white tw-shadow-sm'
                 }`}
               >
@@ -668,6 +945,11 @@ const DashboardPage = () => {
                   <>
                     <CheckCircle className="tw-w-3.5 tw-h-3.5 tw-text-v-brown-med" />
                     XP Claimed (+150 XP Active)
+                  </>
+                ) : !dailyChallenge.completed ? (
+                  <>
+                    <Zap className="tw-w-3.5 tw-h-3.5 tw-text-v-text-muted" />
+                    Translate 5 phrases to unlock
                   </>
                 ) : (
                   <>
@@ -711,6 +993,10 @@ const DashboardPage = () => {
             </AnimatePresence>
           </div>
         </div>
+          </>
+        ) : (
+          renderTranslateTool()
+        )}
 
       </main>
 

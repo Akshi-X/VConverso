@@ -1,5 +1,4 @@
 const db = require('./config/db');
-const sqlite3 = require('sqlite3');
 const path = require('path');
 require('dotenv').config();
 
@@ -2392,6 +2391,39 @@ I live in Chennai, a beautiful city in southern India. It is a place full of cul
 
 async function run() {
   try {
+    // Reorder modulesData in-place according to learning complexity order (from Basics -> Descriptive Essays)
+    const orderedIndices = [
+      0,  // Introduction to the Language (Alphabet, pronunciation)
+      6,  // Saludar y despedirse (Greetings & farewells)
+      1,  // Numbers
+      11, // Los colores
+      2,  // Los artículos
+      10, // Los días de la semana
+      16, // Los meses del año
+      4,  // Los datos personales
+      5,  // El origen y la nacionalidad
+      3,  // Las cosas de la clase
+      8,  // La profesión
+      17, // Vocabularios de la familia
+      7,  // El verbo SER en presente de indicativo
+      9,  // Grammar
+      12, // Vocabularios de la casa
+      15, // Expresar la hora
+      13, // Las emociones
+      14, // Las direcciones
+      18, // El clima y la estación
+      19, // Los vocabularios de la geografía
+      20, // Essay Structure & Transitions
+      21, // Mi Familia
+      23, // Mi casa
+      24, // Mi universidad
+      25, // Mi ciudad
+      22  // Mi equipo favorito
+    ];
+    const orderedModules = orderedIndices.map(idx => modulesData[idx]);
+    modulesData.length = 0;
+    modulesData.push(...orderedModules);
+
     console.log("Connecting database to seed Spanish curriculum...");
     await db.initDb();
     console.log("Database initialized. System:", db.getDbType());
@@ -2449,6 +2481,7 @@ async function run() {
     console.log("Attempting direct SQLite sync if database.sqlite is present...");
     await new Promise((resolve) => {
       try {
+        const sqlite3 = require('sqlite3');
         const sqliteDb = new sqlite3.Database(dbPath, (err) => {
           if (err) {
             console.log("SQLite DB close/skip error:", err.message);
