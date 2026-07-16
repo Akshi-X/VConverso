@@ -31,6 +31,7 @@ import {
   Loader2,
   Volume2,
 } from 'lucide-react';
+import { BookLogo } from '../components/Logo';
 
 const quotes = [
   { text: "A different language is a different vision of life.", author: "Federico Fellini" },
@@ -539,7 +540,7 @@ const DashboardPage = () => {
         {/* Brand Header */}
         <div className="tw-p-6 tw-border-b tw-border-v-brown-med/10 tw-flex tw-items-center">
           <Link to="/dashboard" className="tw-flex tw-items-center tw-gap-2.5 tw-no-underline">
-            <Globe className="tw-w-5 tw-h-5 tw-text-[#6B3E2E]" />
+            <BookLogo className="tw-w-12 tw-h-12" />
             <span className="tw-font-bold tw-text-xl tw-tracking-wider tw-text-[#6B3E2E]">
               VConverso
             </span>
@@ -566,6 +567,14 @@ const DashboardPage = () => {
           >
             <Compass className="tw-w-4 tw-h-4 tw-text-[#6B3E2E]" />
             Language Pathways
+          </Link>
+
+          <Link
+            to="/profile"
+            className="tw-w-full tw-h-12 tw-flex tw-items-center tw-gap-3.5 tw-px-4 tw-rounded-xl tw-font-semibold tw-text-sm tw-transition-all tw-duration-250 tw-text-[#6B3E2E] tw-bg-transparent hover:tw-bg-[#EFE4D6] tw-no-underline"
+          >
+            <User className="tw-w-4 tw-h-4 tw-text-[#6B3E2E]" />
+            Your Profile
           </Link>
 
           <button
@@ -624,9 +633,7 @@ const DashboardPage = () => {
         {/* MOBILE DOCK MENU (Active only on small screens) */}
         <header className="md:tw-hidden tw-bg-v-navbar tw-border tw-border-v-brown-med/10 tw-rounded-2xl tw-p-4 tw-flex tw-items-center tw-justify-between tw-shadow-sm">
           <div className="tw-flex tw-items-center tw-gap-3">
-            <span className="tw-bg-gradient-to-br tw-from-v-brown-dark tw-to-v-brown-med tw-p-2 tw-rounded-lg tw-inline-flex">
-              <Globe className="tw-w-4 tw-h-4 tw-text-white" />
-            </span>
+            <BookLogo className="tw-w-14 tw-h-14" />
             <span className="tw-font-bold tw-text-base tw-tracking-wider tw-text-v-brown-dark">VConverso</span>
           </div>
 
@@ -636,6 +643,12 @@ const DashboardPage = () => {
               className="tw-bg-[#EFE4D6] tw-text-[#6B3E2E] tw-p-2 tw-rounded-lg tw-border tw-border-[#C7B299]/30 hover:tw-bg-[#F5EFE6] tw-transition-all tw-inline-flex tw-items-center tw-justify-center"
             >
               <Compass className="tw-w-4 tw-h-4" />
+            </Link>
+            <Link
+              to="/profile"
+              className="tw-bg-[#EFE4D6] tw-text-[#6B3E2E] tw-p-2 tw-rounded-lg tw-border tw-border-[#C7B299]/30 hover:tw-bg-[#F5EFE6] tw-transition-all tw-inline-flex tw-items-center tw-justify-center"
+            >
+              <User className="tw-w-4 tw-h-4" />
             </Link>
             <button
               onClick={() => setActiveTab(activeTab === 'translate' ? 'dashboard' : 'translate')}

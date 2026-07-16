@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { BookLogo } from '../components/Logo';
 
 const IntroPage = () => {
   const navigate = useNavigate();
@@ -81,12 +82,12 @@ const IntroPage = () => {
         >
           {/* Subtle minimal logo icon above title */}
           <motion.div 
-            className="tw-mb-4 tw-text-[#6B3E2E]"
+            className="tw-mb-4"
             initial={{ y: -5 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <i className="bi bi-translate tw-text-5xl"></i>
+            <BookLogo className="tw-w-48 tw-h-48 md:tw-w-64 md:tw-h-64 tw-drop-shadow-xl" />
           </motion.div>
 
           {/* VConverso Premium Typography */}

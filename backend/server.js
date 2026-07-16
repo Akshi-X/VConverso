@@ -12,6 +12,10 @@ const PORT = process.env.PORT || 5000;
 // Enable CORS
 app.use(cors());
 
+// Serve static uploads (for avatars)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Parse incoming JSON requests
 app.use(express.json());
 
@@ -32,6 +36,8 @@ const noteRoutes = require('./routes/notes');
 const quizRoutes = require('./routes/quizzes'); // handles /quizzes, /questions, /submit-quiz
 const progressRoutes = require('./routes/progress');
 const translateRoutes = require('./routes/translate');
+const userRoutes = require('./routes/users');
+const badgeRoutes = require('./routes/badges');
 
 // Register Routes
 app.use('/api/auth', authRoutes);
@@ -41,6 +47,8 @@ app.use('/api/notes', noteRoutes);
 app.use('/api', quizRoutes); // Mounted directly under /api to support exact paths
 app.use('/api/progress', progressRoutes);
 app.use('/api/translate', translateRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/badges', badgeRoutes);
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {

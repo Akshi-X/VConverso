@@ -70,6 +70,38 @@ async function initDb() {
       await pgPool.query('ALTER TABLE DailyChallenge ADD COLUMN IF NOT EXISTS translations_count INT DEFAULT 0;').catch(() => {});
       await pgPool.query('ALTER TABLE DailyChallenge ADD COLUMN IF NOT EXISTS last_activity_date VARCHAR(10) NULL;').catch(() => {});
 
+      // Ensure User columns exist in PostgreSQL
+      const userCols = [
+        'avatar TEXT', 'bio TEXT', 'native_language TEXT', 'learning_goal TEXT',
+        'email_verified BOOLEAN DEFAULT false', 'reset_token TEXT', 'reset_token_expiry TIMESTAMP'
+      ];
+      for (const col of userCols) {
+        await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col};`).catch(() => {});
+      }
+      
+      // Badges
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS Badges (
+          badge_id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          description TEXT NOT NULL,
+          icon VARCHAR(255) NOT NULL,
+          criteria VARCHAR(255)
+        );
+      `).catch(() => {});
+
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS UserBadges (
+          user_badge_id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          badge_id INT NOT NULL,
+          earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+          FOREIGN KEY (badge_id) REFERENCES Badges(badge_id) ON DELETE CASCADE,
+          UNIQUE (user_id, badge_id)
+        );
+      `).catch(() => {});
+
       return;
     } catch (err) {
       console.warn(`[Database WARNING] Failed to connect to PostgreSQL: ${err.message}`);
@@ -233,9 +265,29 @@ function initSQLiteSchemaAndSeed() {
           name TEXT NOT NULL,
           email TEXT UNIQUE NOT NULL,
           password TEXT NOT NULL,
+          avatar TEXT,
+          bio TEXT,
+          native_language TEXT,
+          learning_goal TEXT,
+          email_verified BOOLEAN DEFAULT 0,
+          reset_token TEXT,
+          reset_token_expiry DATETIME,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      sqliteDb.all('PRAGMA table_info(User);', [], (pragmaErr, cols) => {
+        if (!pragmaErr && Array.isArray(cols)) {
+          const names = cols.map(c => c.name);
+          if (!names.includes('avatar')) sqliteDb.run('ALTER TABLE User ADD COLUMN avatar TEXT;');
+          if (!names.includes('bio')) sqliteDb.run('ALTER TABLE User ADD COLUMN bio TEXT;');
+          if (!names.includes('native_language')) sqliteDb.run('ALTER TABLE User ADD COLUMN native_language TEXT;');
+          if (!names.includes('learning_goal')) sqliteDb.run('ALTER TABLE User ADD COLUMN learning_goal TEXT;');
+          if (!names.includes('email_verified')) sqliteDb.run('ALTER TABLE User ADD COLUMN email_verified BOOLEAN DEFAULT 0;');
+          if (!names.includes('reset_token')) sqliteDb.run('ALTER TABLE User ADD COLUMN reset_token TEXT;');
+          if (!names.includes('reset_token_expiry')) sqliteDb.run('ALTER TABLE User ADD COLUMN reset_token_expiry DATETIME;');
+        }
+      });
 
       sqliteDb.run(`
         CREATE TABLE IF NOT EXISTS Language (
@@ -335,6 +387,28 @@ function initSQLiteSchemaAndSeed() {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
           UNIQUE (user_id)
+        );
+      `);
+
+      sqliteDb.run(`
+        CREATE TABLE IF NOT EXISTS Badges (
+          badge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          icon TEXT NOT NULL,
+          criteria TEXT
+        );
+      `);
+
+      sqliteDb.run(`
+        CREATE TABLE IF NOT EXISTS UserBadges (
+          user_badge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          badge_id INTEGER NOT NULL,
+          earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+          FOREIGN KEY (badge_id) REFERENCES Badges(badge_id) ON DELETE CASCADE,
+          UNIQUE (user_id, badge_id)
         );
       `);
 

@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BookLogo } from '../components/Logo';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -22,9 +23,7 @@ const Navbar = () => {
       <div className="container">
         {/* Brand logo */}
         <Link className="navbar-brand d-flex align-items-center fw-bold fs-4" to={user ? "/dashboard" : "/login"}>
-          <span className="p-2 rounded-3 me-2 d-inline-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, var(--color-brown-dark) 0%, var(--color-brown-med) 100%)', boxShadow: '0 4px 10px rgba(107, 62, 46, 0.15)' }}>
-            <i className="bi bi-translate text-white fs-5"></i>
-          </span>
+          <BookLogo className="tw-w-14 tw-h-14 me-2" />
           <span className="fw-bold" style={{ color: 'var(--color-brown-dark)' }}>VConverso</span>
         </Link>
 
@@ -54,6 +53,11 @@ const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link px-3" to="/languages">
                     <i className="bi bi-journal-bookmark me-1"></i> Languages
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link px-3" to="/profile">
+                    <i className="bi bi-person me-1"></i> Profile
                   </Link>
                 </li>
               </>

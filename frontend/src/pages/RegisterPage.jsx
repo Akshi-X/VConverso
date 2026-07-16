@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { BookLogo } from '../components/Logo';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -59,10 +60,7 @@ const RegisterPage = () => {
         {/* Mockup Logo & Branding Header */}
         <div className="tw-text-center tw-mb-8 tw-flex tw-flex-col tw-items-center">
           <Link to="/" className="tw-flex tw-items-center tw-justify-center tw-gap-3.5 tw-no-underline">
-            {/* Dark box with white icon */}
-            <div className="tw-w-12 tw-h-12 tw-rounded-2xl tw-bg-gradient-to-tr tw-from-v-brown-dark tw-to-v-brown-med tw-flex tw-items-center tw-justify-center tw-shadow-md tw-transition-transform hover:tw-rotate-[3deg]">
-              <i className="bi bi-translate tw-text-2xl tw-text-white"></i>
-            </div>
+            <BookLogo className="tw-w-24 tw-h-24 tw-transition-transform hover:tw-rotate-[3deg]" />
             <span className="tw-text-3xl tw-font-bold tw-tracking-tight tw-font-sans tw-text-v-brown-dark">
               VConverso
             </span>

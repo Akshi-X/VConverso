@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { BookLogo } from '../components/Logo';
 
 const WelcomePage = () => {
   const { user, logout } = useAuth();
@@ -119,9 +120,14 @@ const WelcomePage = () => {
           
           {/* Logo brand */}
           <Link to="/dashboard" className="tw-flex tw-items-center tw-gap-2.5 tw-no-underline">
-            <span className="tw-bg-gradient-to-br tw-from-v-brown-dark tw-to-v-brown-med tw-p-2.5 tw-rounded-xl tw-flex tw-items-center tw-justify-center tw-shadow-md tw-shadow-v-brown-dark/10">
-              <i className="bi bi-translate tw-text-white tw-text-lg"></i>
-            </span>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+              className="tw-w-16 tw-h-16 tw-flex tw-items-center tw-justify-center"
+            >
+              <BookLogo className="tw-w-full tw-h-full" />
+            </motion.div>
             <span className="tw-text-xl tw-font-bold tw-tracking-wide tw-text-v-brown-dark">
               V<span className="tw-text-v-brown-med">Converso</span>
             </span>

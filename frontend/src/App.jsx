@@ -16,6 +16,10 @@ import DashboardPage from './pages/DashboardPage';
 import WelcomePage from './pages/WelcomePage';
 import IntroPage from './pages/IntroPage';
 import LanguageSelectionPage from './pages/LanguageSelectionPage';
+import ProfilePage from './pages/ProfilePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 /**
  * Route guard for private/session endpoints
@@ -107,6 +111,28 @@ function AppContent() {
               </PublicRoute>
             } 
           />
+          <Route 
+            path="/forgot-password" 
+            element={
+              <PublicRoute>
+                <ForgotPasswordPage />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/reset-password" 
+            element={
+              <PublicRoute>
+                <ResetPasswordPage />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/verify-email" 
+            element={
+              <VerifyEmailPage />
+            } 
+          />
           
           {/* First Time Onboarding Language Selection */}
           <Route 
@@ -134,6 +160,14 @@ function AppContent() {
             element={
               <PrivateRoute>
                 <DashboardPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <PrivateRoute>
+                <ProfilePage />
               </PrivateRoute>
             } 
           />
